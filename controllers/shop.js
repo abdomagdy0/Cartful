@@ -1,6 +1,19 @@
 const Product = require('../models/product');
+const path = require('path')
+const fs = require('fs')
 const Cart = require('../models/cart');
+const p = path.join(
+  path.dirname(process.mainModule.filename), 'data', 'cart.json')
 
+const getProductsFromFile = cb => {
+  fs.readFile(p, (err, fileContent) => {
+    if (err) {
+      cb([]);
+    } else {
+      cb(JSON.parse(fileContent));
+    }
+  });
+}
 exports.getProducts = (req, res, next) => {
   Product.fetchAll(products => {
     res.render('shop/product-list', {
@@ -45,7 +58,6 @@ exports.getCart = (req, res, next) => {
             productData: product,
             qty: cartProductData.qty
           })
-          console.log("id in cart matched id in product db, ... fetching", cartProducts)
 
         }
       }
@@ -58,8 +70,6 @@ exports.getCart = (req, res, next) => {
     })
   })
 }
-
-
 exports.postCart = (req, res, next) => {
   const prodId = req.body.productId;
   Product.findById(prodId, product => {
@@ -67,7 +77,29 @@ exports.postCart = (req, res, next) => {
   });
   res.redirect('/cart');
 };
+exports.postDeleteCartItem = (req, res, next) => {
+  console.log("beginning the process")
+  const prodId = req.body.productId
+  console.log("productid", prodId)
+  getProductsFromFile(cart => {
+    console.log(cart)
+    const productIndex = cart.products.find(p => p.id == prodId)
+    const product = cart[productIndex]
 
+    cart.products.pop(product)
+
+    // wRITE CHANGES TO CART FILE 
+    parsedCart = JSON.stringify(cart)
+    fs.writeFile(p, parsedCart, err => {
+      console.log(err)
+    })
+    console.log("**********************************************")
+    console.log("cart => deleted product with id", prodId)
+    console.log("**********************************************")
+  }
+  )
+  return res.redirect("/cart")
+}
 exports.getOrders = (req, res, next) => {
   res.render('shop/orders', {
     path: '/orders',

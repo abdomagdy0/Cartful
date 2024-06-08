@@ -50,8 +50,6 @@ exports.postDeleteProduct = (req, res, next) => {
       'data',
       'cart.json'),
   }
-
-
   const getProductsFromFile = cb => {
     fs.readFile(dbpaths.prodPath, (err, fileContent) => {
       if (err) {
@@ -61,7 +59,6 @@ exports.postDeleteProduct = (req, res, next) => {
       }
     });
   };
-
 
   const prodId = req.params.productId
   getProductsFromFile(products => {
