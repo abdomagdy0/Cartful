@@ -1,48 +1,61 @@
-const { json } = require('body-parser');
-const fs = require('fs')
-const path = require('path');
-const { findById } = require('./product');
+const fs = require('fs');
+const path = require('path')
+const prodpaths = require('./product')
 
 const p = path.join(
   path.dirname(process.mainModule.filename),
   'data',
-  'products.json'
+  'cart.json'
 );
 
 module.exports = class Cart {
-
   static addProduct(id, productPrice) {
+    // Fetch the previous cart
     fs.readFile(p, (err, fileContent) => {
-      let cart = { products: [], totalPrice: 0 }
+      let cart = { products: [], totalPrice: 0 };
       if (!err) {
-        JSON.parse(fileContent)
-      }
-      // analyze the cart        // updated product =  => the object with the id we looking for with set of properties ..., and the {}]
-      const existingProductIndex = cart.products.findIndex(prod => prod.id == id)
-      const existingProduct = cart.products[existingProductIndex]
+        cart = JSON.parse(fileContent);
 
-      let updatedProduct
+      }
+      // Analyze the cart => Find existing product
+      const existingProductIndex = cart.products.findIndex(
+        prod => prod.id === id
+      );
+      const existingProduct = cart.products[existingProductIndex];
+      let updatedProduct;
+      // Add new product/ increase quantity
       if (existingProduct) {
-        updatedProduct = { ...existingProduct }
-        cart.products = { ...cart.products }
-        cart.products[existingProductIndex] = updatedProduct
-        console.log("Product exists it will be added to the quantity", updatedProduct)
-        updatedProduct.qty = existingProduct.totalQuantity + 1
+        updatedProduct = { ...existingProduct };
+        updatedProduct.qty = updatedProduct.qty + 1;
+        cart.products = [...cart.products];
+        cart.products[existingProductIndex] = updatedProduct;
+      } else {
+        updatedProduct = { id: id, qty: 1 };
+        cart.products = [...cart.products, updatedProduct];
       }
-      else {
-        //
-        updatedProduct = { id: id, qty: 1 }
-        cart = { ...cart.products, updatedProduct }
-      }
-      cart.totalPrice = cart.totalPrice + productPrice
-      cart = { ...cart.products, updatedProduct }
-      console.log("cart", cart)
-      fs.writeFile(p, JSON.stringify(cart), err => { console.log(err) })
-
+      cart.totalPrice = cart.totalPrice + +productPrice;
+      fs.writeFile(p, JSON.stringify(cart), err => {
+        console.log(err);
+      });
     })
 
+  }
+  static getCartPrdocuts(cb) {
+    const dbpaths = {
+      prodPath: path.join(
+        path.dirname(process.mainModule.filename), 'data', 'products.json'), cartPath: path.join(path.dirname(process.mainModule.filename), 'data', 'cart.json'),
+    }
+    const p = dbpaths.cartPath
+    fs.readFile(p, (err, fileContent) => {
+      if (!err) {
+        const cart = JSON.parse(fileContent)
+        return cb(cart)
+      }
+      else {
+        console.log("err")
+        cb(err)
+      }
 
-
-
+    })
   }
 }

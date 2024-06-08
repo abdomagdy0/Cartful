@@ -1,16 +1,12 @@
 const Product = require('../models/product');
-
+const path = require('path')
+const fs = require('fs')
+const { get } = require('../routes/admin');
 exports.getAddProduct = (req, res, next) => {
-  //path to edit html
   res.render('admin/edit-product', {
     pageTitle: 'Add Product',
-    // path for URL
     path: '/admin/add-product',
-    formsCSS: true,
-    productCSS: true,
-    activeAddProduct: true
-    , editing: "false"
-    , product: ''
+    editing: false
   });
 };
 
@@ -19,34 +15,89 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-  const product = new Product(title, imageUrl, description, price);
+  const product = new Product(null, title, imageUrl, description, price);
   product.save();
   res.redirect('/');
 };
 
 exports.getEditProduct = (req, res, next) => {
-  const editmode = req.query.edit
-  const prodId = req.params.productId
-  if (!editmode) {
-    console.log('editing mode disabled')
-    return res.redirect('/')
+  const editMode = req.query.edit;
+  if (!editMode) {
+    return res.redirect('/');
   }
-  console.log("printing the id", req.params.productId)
-
+  const prodId = req.params.productId;
   Product.findById(prodId, product => {
-    if (!product) { console.log("product object is unidentified"); return res.redirect('/') }
-
+    if (!product) {
+      return res.redirect('/');
+    }
     res.render('admin/edit-product', {
       pageTitle: 'Edit Product',
-      path: '/admin/edit-product/:productId',
-      editing: editmode,
+      path: '/admin/edit-product',
+      editing: editMode,
       product: product
     });
+  });
+};
+exports.postDeleteProduct = (req, res, next) => {
 
-  })
+  const dbpaths = {
+    prodPath: path.join(
+      path.dirname(process.mainModule.filename),
+      'data',
+      'products.json'),
+    cartPath: path.join(
+      path.dirname(process.mainModule.filename),
+      'data',
+      'cart.json'),
+  }
 
 
-  //exports.postEditProduct =
+  const getProductsFromFile = cb => {
+    fs.readFile(dbpaths.prodPath, (err, fileContent) => {
+      if (err) {
+        cb([]);
+      } else {
+        cb(JSON.parse(fileContent));
+      }
+    });
+  };
+
+
+  const prodId = req.params.productId
+  getProductsFromFile(products => {
+    productIndex = products.findIndex(p => p.id == prodId)
+    console.log(productIndex)
+    const product = products[productIndex]
+    products.pop(products[productIndex])
+    console.log(products)
+    parsedProducts = JSON.stringify(products)
+    fs.writeFile(p, parsedProducts, err => {
+      console.log(err)
+    })
+    console.log("*************************")
+
+    console.log("deleted product from  file", product)
+  }
+  )
+  return res.redirect("/product-deleted")
+
+}
+
+exports.postEditProduct = (req, res, next) => {
+  const prodId = req.body.productId;
+  const updatedTitle = req.body.title;
+  const updatedPrice = req.body.price;
+  const updatedImageUrl = req.body.imageUrl;
+  const updatedDesc = req.body.description;
+  const updatedProduct = new Product(
+    prodId,
+    updatedTitle,
+    updatedImageUrl,
+    updatedDesc,
+    updatedPrice
+  );
+  updatedProduct.save();
+  res.redirect('/admin/products');
 };
 
 exports.getProducts = (req, res, next) => {
