@@ -43,7 +43,8 @@ module.exports = class Cart {
   static getCartPrdocuts(cb) {
     const dbpaths = {
       prodPath: path.join(
-        path.dirname(process.mainModule.filename), 'data', 'products.json'), cartPath: path.join(path.dirname(process.mainModule.filename), 'data', 'cart.json'),
+        path.dirname(process.mainModule.filename), 'data', 'products.json'),
+      cartPath: path.join(path.dirname(process.mainModule.filename), 'data', 'cart.json'),
     }
     const p = dbpaths.cartPath
     fs.readFile(p, (err, fileContent) => {
